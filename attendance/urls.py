@@ -21,4 +21,7 @@ urlpatterns = [
     path('painel/recepcao/', views.painel_recepcao, name='painel_recepcao'),
     # TV 02: Fica no Corredor dos Consultórios
     path('painel/medico/', views.painel_medico, name='painel_medico'),
+    
+    path('medico/', views.medico_atendimento, name='medico_atendimento'),
+    path('medico/chamar/<int:ficha_id>/', views.chamar_paciente_medico, name='chamar_medico'),
 ]

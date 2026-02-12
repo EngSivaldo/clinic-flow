@@ -108,3 +108,30 @@ def painel_medico(request):
         "atual": chamado, 
         "fila": fila_corredor
     })
+
+def medico_atendimento(request):
+    # Filtra pacientes que foram roteados especificamente para este médico e estão esperando
+    fila_espera = FichaAtendimento.objects.filter(
+        medico=request.user,
+        status=FichaAtendimento.Status.AGUARDANDO_MEDICO
+    ).order_by('-prioridade', 'criado_em')
+
+    # Busca se já existe alguém em atendimento neste consultório
+    paciente_atendimento = FichaAtendimento.objects.filter(
+        medico=request.user,
+        status__in=[FichaAtendimento.Status.CHAMADO_MEDICO, FichaAtendimento.Status.EM_CONSULTA]
+    ).first()
+
+    return render(request, "attendance/medico_atendimento.html", {
+        "fila_espera": fila_espera,
+        "paciente_atendimento": paciente_atendimento,
+        "local_atual": "Consultório 01" # Isso pode vir de um perfil do usuário depois
+    })
+
+def chamar_paciente_medico(request, ficha_id):
+    """Gatilha a chamada na TV 02"""
+    ficha = get_object_or_404(FichaAtendimento, id=ficha_id)
+    # Chama o serviço que muda o status e define o horário da chamada para o som tocar
+    chamar_para_medico(ficha_id) 
+    messages.success(request, f"Chamando {ficha.paciente.nome} no painel.")
+    return redirect('attendance:medico_atendimento')

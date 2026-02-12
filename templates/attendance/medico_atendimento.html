@@ -1,0 +1,79 @@
+{% extends "layouts/base.html" %}
+
+{% block title %}Consultório • Atendimento{% endblock %}
+
+{% block content %}
+<div class="mb-6 flex justify-between items-center">
+    <div>
+        <h2 class="text-2xl font-bold text-slate-800 tracking-tight">Consultório: {{ request.user.get_full_name }}</h2>
+        <p class="text-slate-500">Gerencie sua fila de pacientes aguardando atendimento.</p>
+    </div>
+    <div class="bg-blue-100 text-blue-700 px-4 py-2 rounded-lg font-bold border border-blue-200">
+        {{ local_atual|default:"Consultório não definido" }}
+    </div>
+</div>
+
+<div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+    
+    <div class="lg:col-span-2 space-y-6">
+        {% if paciente_atendimento %}
+        <div class="bg-white rounded-3xl shadow-sm border-2 border-blue-500 overflow-hidden">
+            <div class="bg-blue-500 px-6 py-4 flex justify-between items-center">
+                <span class="text-white font-bold uppercase tracking-widest text-sm">Em Atendimento Agora</span>
+                <span class="bg-white text-blue-600 px-3 py-1 rounded-full text-xs font-black">{{ paciente_atendimento.codigo }}</span>
+            </div>
+            <div class="p-8 text-center">
+                <h3 class="text-4xl font-black text-slate-800 mb-2">{{ paciente_atendimento.paciente.nome }}</h3>
+                <p class="text-slate-500 font-medium mb-6 italic">Sinais Vitais: PA {{ paciente_atendimento.pa_sistolica }}/{{ paciente_atendimento.pa_diastolica }} | Temp: {{ paciente_atendimento.temperatura }}°C</p>
+                
+                <div class="flex gap-4 justify-center">
+                    <form method="post" action="{% url 'attendance:finalizar_atendimento' paciente_atendimento.id %}">
+                        {% csrf_token %}
+                        <button type="submit" class="bg-emerald-600 hover:bg-emerald-700 text-white px-8 py-4 rounded-2xl font-bold transition-all shadow-lg shadow-emerald-200">
+                            FINALIZAR ATENDIMENTO
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+        {% else %}
+        <div class="bg-slate-50 rounded-3xl border-2 border-dashed border-slate-200 p-12 text-center">
+            <div class="text-slate-300 mb-4 text-6xl">🩺</div>
+            <h3 class="text-xl font-bold text-slate-400">Nenhum paciente sendo atendido no momento.</h3>
+            <p class="text-slate-400">Selecione um paciente na fila ao lado para iniciar.</p>
+        </div>
+        {% endif %}
+    </div>
+
+    <div class="bg-white rounded-3xl shadow-sm border border-slate-200 p-6">
+        <h3 class="font-bold text-slate-700 uppercase text-xs tracking-widest mb-6 flex items-center gap-2">
+            <span class="w-2 h-2 bg-orange-500 rounded-full animate-pulse"></span>
+            Aguardando na Porta
+        </h3>
+        
+        <div class="space-y-4">
+            {% for p in fila_espera %}
+            <div class="p-4 rounded-2xl border border-slate-100 bg-slate-50 hover:border-blue-300 transition-colors">
+                <div class="flex justify-between items-start mb-2">
+                    <span class="font-black text-slate-800 truncate pr-2">{{ p.paciente.nome }}</span>
+                    <span class="text-xs font-bold bg-white px-2 py-1 rounded border border-slate-200">{{ p.codigo }}</span>
+                </div>
+                <div class="flex justify-between items-center">
+                    <span class="text-[10px] font-bold uppercase px-2 py-0.5 rounded {% if p.prioridade == 4 %}bg-red-100 text-red-600{% else %}bg-blue-100 text-blue-600{% endif %}">
+                        {{ p.get_prioridade_display }}
+                    </span>
+                    <form method="post" action="{% url 'attendance:chamar_medico' p.id %}">
+                        {% csrf_token %}
+                        <button class="text-blue-600 font-bold text-sm hover:underline">
+                            CHAMAR NO PAINEL →
+                        </button>
+                    </form>
+                </div>
+            </div>
+            {% empty %}
+            <p class="text-center text-slate-400 py-10 italic">Fila vazia</p>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+{% endblock %}
