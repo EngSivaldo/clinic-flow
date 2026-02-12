@@ -1,0 +1,6 @@
+@import "tailwindcss";
+
+/* Diz ao Tailwind onde procurar classes (templates Django) */
+@source "../../templates/**/*.html";
+@source "../../**/templates/**/*.html";
+@source "../../**/*.py";

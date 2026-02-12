@@ -1,23 +1,60 @@
+{% load static %}
 <!doctype html>
-<html lang="pt-br">
+<html lang="pt-br" class="h-full">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>{% block title %}Prefeitura de Tucuruí - Secretaria de Saúde{% endblock %}</title>
-  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <title>{% block title %}Prefeitura de Tucuruí • ClinicFlow{% endblock %}</title>
+  <link rel="stylesheet" href="{% static 'css/app.css' %}">
+  {% block extra_head %}{% endblock %}
 </head>
-<body class="bg-light">
 
-<nav class="navbar navbar-expand-lg navbar-dark bg-primary">
-  <div class="container-fluid">
-    <span class="navbar-brand fw-bold">Prefeitura de Tucuruí • Secretaria de Saúde</span>
-  </div>
-</nav>
+<body class="flex flex-col min-h-screen bg-slate-50 text-slate-900 font-sans">
 
-<main class="container py-4">
-  {% block content %}{% endblock %}
-</main>
+  <header class="bg-[#004a99] text-white shadow-lg border-b-4 border-yellow-400">
+    <div class="mx-auto max-w-7xl px-6 py-4 flex items-center justify-between">
+      <div class="flex items-center gap-4">
+        <div>
+          <h1 class="text-xl font-black uppercase tracking-tight">Prefeitura de Tucuruí</h1>
+          <p class="text-xs font-medium text-blue-100 uppercase tracking-widest">Secretaria Municipal de Saúde</p>
+        </div>
+      </div>
 
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+      <nav class="hidden md:flex gap-6 text-sm font-bold uppercase tracking-wide">
+        <a href="{% url 'attendance:recepcao_gerar_senha' %}" class="hover:text-yellow-400 transition-colors">Recepção</a>
+        <a href="{% url 'attendance:triagem_lista' %}" class="hover:text-yellow-400 transition-colors">Triagem</a>
+        <a href="{% url 'attendance:lancamento_lista' %}" class="hover:text-yellow-400 transition-colors">Lançamento</a>
+        <div class="w-px h-4 bg-blue-400 self-center"></div>
+        <a href="{% url 'attendance:painel_recepcao' %}" target="_blank" class="text-yellow-400 hover:underline">Abrir TV 01</a>
+        <a href="{% url 'attendance:painel_medico' %}" target="_blank" class="text-yellow-400 hover:underline">Abrir TV 02</a>
+      </nav>
+    </div>
+  </header>
+
+  {% if messages %}
+    <div class="mx-auto max-w-7xl px-6 mt-4">
+      {% for message in messages %}
+        <div class="p-4 rounded-md shadow-sm border-l-4 
+          {% if message.tags == 'success' %} bg-green-50 border-green-500 text-green-800 
+          {% elif message.tags == 'error' %} bg-red-50 border-red-500 text-red-800 
+          {% else %} bg-blue-50 border-blue-500 text-blue-800 {% endif %}">
+          {{ message }}
+        </div>
+      {% endfor %}
+    </div>
+  {% endif %}
+
+  <main class="flex-grow mx-auto w-full max-w-7xl px-6 py-8">
+    {% block content %}{% endblock %}
+  </main>
+
+  <footer class="bg-white border-t mt-auto">
+    <div class="mx-auto max-w-7xl px-6 py-6 flex flex-col md:flex-row justify-between items-center text-sm text-slate-500 gap-4">
+      <div><strong>ClinicFlow</strong> — Gestão de Filas UPA</div>
+      <div>© {% now "Y" %} Prefeitura de Tucuruí</div>
+    </div>
+  </footer>
+
+  {% block extra_js %}{% endblock %}
 </body>
 </html>

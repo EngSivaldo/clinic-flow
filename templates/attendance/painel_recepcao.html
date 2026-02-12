@@ -1,0 +1,113 @@
+{% extends "layouts/base-tv.html" %}
+{% load static %}
+
+{% block title %}TV 01 • RECEPÇÃO E TRIAGEM{% endblock %}
+
+{% block content %}
+<div class="h-full flex flex-col p-6 gap-6 overflow-hidden">
+    
+    <header class="bg-[#004a99] p-6 rounded-3xl shadow-2xl flex items-center justify-between border-b-[8px] border-blue-900">
+        <div class="flex items-center gap-6">
+            <div class="bg-white p-2 rounded-xl shadow-inner">
+                <img src="https://ui-avatars.com/api/?name=SUS&background=fff&color=004a99&size=128" alt="Logo" class="w-14 h-14">
+            </div>
+            <div>
+                <h1 class="text-3xl font-black text-white tracking-tighter uppercase leading-none">Prefeitura de Tucuruí</h1>
+                <p class="text-blue-300 font-bold uppercase tracking-[0.3em] text-sm mt-1">Recepção e Triagem</p>
+            </div>
+        </div>
+        <div class="text-right text-white">
+            <div class="text-5xl font-black tabular-nums leading-none" id="clock">00:00</div>
+            <div class="text-blue-200 font-bold text-lg uppercase tracking-widest mt-1" id="date">-- --- ----</div>
+        </div>
+    </header>
+
+    <main class="flex-grow grid grid-cols-12 gap-6 mb-24"> <div class="col-span-8 bg-white rounded-[3.5rem] shadow-2xl border border-slate-200 p-6 flex flex-col justify-between text-center relative overflow-hidden h-full">
+            <div class="absolute top-0 left-0 w-full h-3 bg-yellow-400"></div>
+            
+            <h2 class="text-slate-400 font-black text-2xl uppercase tracking-[0.2em] mt-2">Comparecer à Triagem</h2>
+
+            <div class="flex-grow flex items-center justify-center my-2">
+                <div id="ticket-box" class="bg-blue-600 inline-block px-14 py-8 rounded-[2.5rem] shadow-2xl border-b-[12px] border-blue-800">
+                    <span class="text-[11rem] font-black text-white leading-none tracking-tighter tabular-nums">
+                        {{ atual.codigo|default:"---" }}
+                    </span>
+                </div>
+            </div>
+
+            <div class="pb-4">
+                <p class="text-5xl font-black text-slate-800 uppercase tracking-tight mb-4 break-words leading-tight px-4">
+                    {{ atual.paciente.nome|default:"Aguarde sua senha..." }}
+                </p>
+                <div class="inline-flex items-center gap-4 bg-emerald-100 text-emerald-700 px-10 py-3 rounded-2xl border border-emerald-200">
+                    <span class="text-2xl font-black uppercase tracking-widest">
+                        SALA DE TRIAGEM
+                    </span>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-span-4 flex flex-col gap-6 h-full">
+            <div class="bg-slate-800 rounded-[2.5rem] p-6 shadow-2xl flex-grow border border-slate-700 overflow-hidden">
+                <h3 class="text-slate-400 font-black text-lg uppercase tracking-widest mb-4 border-b border-slate-700 pb-3 text-center">Próximas Senhas</h3>
+                <div class="flex flex-wrap gap-3 justify-center">
+                    {% for p in proximos %}
+                    <div class="bg-slate-700 text-white px-5 py-3 rounded-xl border-b-4 border-slate-900 shadow-md">
+                        <span class="text-3xl font-black">{{ p.codigo }}</span>
+                    </div>
+                    {% empty %}
+                    <p class="text-slate-500 font-bold italic uppercase text-sm">Fila vazia</p>
+                    {% endfor %}
+                </div>
+            </div>
+
+            <div class="bg-white rounded-[2.5rem] p-6 shadow-xl border border-slate-200">
+                <p class="text-slate-500 font-bold text-center leading-tight text-lg">
+                    Tenha em mãos seu <br> <span class="text-blue-600 font-black">DOCUMENTO COM FOTO</span>.
+                </p>
+            </div>
+        </div>
+    </main>
+</div>
+
+<audio id="alert-sound" src="https://assets.mixkit.co/active_storage/sfx/2869/2869-preview.mp3" preload="auto"></audio>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    const currentTicket = "{{ atual.codigo }}";
+    const currentName = "{{ atual.paciente.nome }}";
+
+    function speakCall() {
+        if (!currentTicket || currentTicket === "" || currentTicket === "None" || currentTicket === "---") return;
+
+        const audio = document.getElementById('alert-sound');
+        audio.play().catch(e => console.log("Áudio aguardando interação."));
+
+        setTimeout(() => {
+            const textToSpeak = `Atenção. Paciente ${currentName}. Senha ${currentTicket.split('').join(' ')}. Comparecer à Triagem.`;
+            const utterance = new SpeechSynthesisUtterance(textToSpeak);
+            utterance.lang = 'pt-BR';
+            utterance.rate = 0.85;
+            window.speechSynthesis.speak(utterance);
+        }, 1000);
+    }
+
+    function updateClock() {
+        const now = new Date();
+        const clockEl = document.getElementById('clock');
+        const dateEl = document.getElementById('date');
+        
+        if(clockEl) clockEl.textContent = now.toLocaleTimeString('pt-BR', {hour: '2-digit', minute:'2-digit'});
+        if(dateEl) dateEl.textContent = now.toLocaleDateString('pt-BR', {day: '2-digit', month: 'short', year: 'numeric'});
+    }
+
+    updateClock();
+    setInterval(updateClock, 1000);
+
+    if (localStorage.getItem('last_called_tv1') !== currentTicket && currentTicket !== "" && currentTicket !== "---") {
+        speakCall();
+        localStorage.setItem('last_called_tv1', currentTicket);
+    }
+</script>
+{% endblock %}

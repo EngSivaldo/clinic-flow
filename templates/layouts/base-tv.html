@@ -1,0 +1,43 @@
+{% load static %}
+<!doctype html>
+<html lang="pt-br" class="h-full">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{% block title %}Painel de Chamadas • Tucuruí Saúde{% endblock %}</title>
+
+  <link rel="stylesheet" href="{% static 'css/app.css' %}">
+  
+  <style>
+    /* Garantir que a TV nunca mostre barra de rolagem, mesmo se o conteúdo crescer */
+    body { overflow: hidden; }
+  </style>
+  
+  {% block extra_head %}{% endblock %}
+</head>
+
+<body class="h-full bg-slate-950 text-white font-sans">
+
+  {% block content %}{% endblock %}
+
+  <footer class="fixed bottom-0 left-0 right-0 border-t border-white/10 bg-slate-900/50 backdrop-blur-md">
+    <div class="mx-auto w-full px-12 py-4 flex justify-between items-center">
+      <div class="flex flex-col">
+        <div class="text-xl font-black text-blue-400 uppercase tracking-tight">
+          Aguarde sua chamada no painel
+        </div>
+        <div class="text-sm text-slate-400 font-bold uppercase tracking-widest">
+          Tenha seus documentos em mãos • Prioridades via Protocolo Manchester
+        </div>
+      </div>
+      
+      <div class="text-right border-l border-white/10 pl-8">
+        <div class="text-xs text-slate-500 font-black uppercase">Sistema</div>
+        <div class="text-lg font-black text-white italic">ClinicFlow UPA</div>
+      </div>
+    </div>
+  </footer>
+
+  {% block extra_js %}{% endblock %}
+</body>
+</html>

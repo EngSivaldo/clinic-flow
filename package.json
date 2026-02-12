@@ -1,0 +1,19 @@
+{
+  "name": "clinic-flow",
+  "version": "1.0.0",
+  "main": "index.js",
+  "scripts": {
+    "dev": "npx @tailwindcss/cli -i ./static/src/input.css -o ./static/css/app.css --watch --content \"./**/templates/**/*.html\"",
+    "build": "npx @tailwindcss/cli -i ./static/src/input.css -o ./static/css/app.css --minify --content \"./**/templates/**/*.html\""
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "description": "",
+  "devDependencies": {
+    "@tailwindcss/cli": "^4.1.18",
+    "autoprefixer": "^10.4.24",
+    "postcss": "^8.5.6",
+    "tailwindcss": "^4.1.18"
+  }
+}

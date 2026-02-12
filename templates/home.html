@@ -1,11 +1,74 @@
 {% extends "layouts/base.html" %}
-{% block title %}Home • Tucuruí Saúde{% endblock %}
+{% block title %}Início • Sistema de Gestão Clínica{% endblock %}
 
 {% block content %}
-<div class="p-4 bg-white rounded-4 shadow-sm">
-  <h1 class="h4 fw-bold mb-2">Sistema de Gestão de Atendimento</h1>
-  <p class="mb-0 text-secondary">
-    Ambiente configurado com PostgreSQL. Próximo passo: motor de filas, triagem e painel TV.
-  </p>
+<div class="mb-10">
+    <h2 class="text-3xl font-black text-[#004a99] tracking-tight text-center md:text-left">Painel de Operações</h2>
+    <p class="text-slate-500 text-lg text-center md:text-left">Selecione o seu setor de trabalho na UPA Tucuruí.</p>
+</div>
+
+<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+    
+    <a href="{% url 'attendance:recepcao_gerar_senha' %}" class="group bg-white p-8 rounded-[2rem] shadow-sm border border-slate-200 hover:border-blue-500 hover:shadow-xl transition-all duration-300">
+        <div class="w-14 h-14 bg-blue-100 text-blue-600 rounded-2xl flex items-center justify-center mb-6 group-hover:bg-[#004a99] group-hover:text-white transition-colors">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-7 w-7" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z" />
+            </svg>
+        </div>
+        <h3 class="text-xl font-black text-slate-800 uppercase tracking-tight">Recepção</h3>
+        <p class="text-sm text-slate-500 mt-2 font-medium">Cadastro de novos pacientes e emissão de senhas iniciais.</p>
+    </a>
+
+    <a href="{% url 'attendance:triagem_lista' %}" class="group bg-white p-8 rounded-[2rem] shadow-sm border border-slate-200 hover:border-emerald-500 hover:shadow-xl transition-all duration-300">
+        <div class="w-14 h-14 bg-emerald-100 text-emerald-600 rounded-2xl flex items-center justify-center mb-6 group-hover:bg-emerald-600 group-hover:text-white transition-colors">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-7 w-7" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" />
+            </svg>
+        </div>
+        <h3 class="text-xl font-black text-slate-800 uppercase tracking-tight">Triagem</h3>
+        <p class="text-sm text-slate-500 mt-2 font-medium">Classificação de risco (Manchester) e coleta de sinais vitais.</p>
+    </a>
+
+    <a href="{% url 'attendance:lancamento_lista' %}" class="group bg-white p-8 rounded-[2rem] shadow-sm border border-slate-200 hover:border-orange-500 hover:shadow-xl transition-all duration-300">
+        <div class="w-14 h-14 bg-orange-100 text-orange-600 rounded-2xl flex items-center justify-center mb-6 group-hover:bg-orange-500 group-hover:text-white transition-colors">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-7 w-7" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4" />
+            </svg>
+        </div>
+        <h3 class="text-xl font-black text-slate-800 uppercase tracking-tight">Lançamento</h3>
+        <p class="text-sm text-slate-500 mt-2 font-medium">Roteamento de pacientes triados para médicos e consultórios.</p>
+    </a>
+
+</div>
+
+<div class="mt-12">
+    <h3 class="text-xs font-black text-slate-400 uppercase tracking-[0.3em] mb-6">Controle de Painéis Públicos</h3>
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+        
+        <a href="{% url 'attendance:painel_recepcao' %}" target="_blank" class="flex items-center gap-6 bg-slate-800 p-6 rounded-[1.5rem] border border-slate-700 hover:bg-slate-900 transition-all group">
+            <div class="w-12 h-12 bg-slate-700 rounded-xl flex items-center justify-center text-blue-400 group-hover:scale-110 transition-transform">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                </svg>
+            </div>
+            <div>
+                <h4 class="text-white font-bold uppercase text-sm tracking-widest">TV 01 • Recepção</h4>
+                <p class="text-slate-400 text-xs mt-1 font-bold">Chamadas para Triagem</p>
+            </div>
+        </a>
+
+        <a href="{% url 'attendance:painel_medico' %}" target="_blank" class="flex items-center gap-6 bg-slate-800 p-6 rounded-[1.5rem] border border-slate-700 hover:bg-slate-900 transition-all group">
+            <div class="w-12 h-12 bg-slate-700 rounded-xl flex items-center justify-center text-emerald-400 group-hover:scale-110 transition-transform">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                </svg>
+            </div>
+            <div>
+                <h4 class="text-white font-bold uppercase text-sm tracking-widest">TV 02 • Consultórios</h4>
+                <p class="text-slate-400 text-xs mt-1 font-bold">Chamadas para Atendimento Médico</p>
+            </div>
+        </a>
+
+    </div>
 </div>
 {% endblock %}
