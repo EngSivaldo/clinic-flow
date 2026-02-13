@@ -53,27 +53,40 @@
 
                         <td class="px-6 py-5">
                             <div class="flex flex-col items-center gap-1">
-                                <span class="text-[10px] font-bold text-slate-600 bg-slate-100 px-2 py-0.5 rounded italic">PA: {{ ficha.pa_sistolica }}/{{ ficha.pa_diastolica }}</span>
+                                <span class="text-[10px] font-bold text-slate-600 bg-slate-100 px-2 py-0.5 rounded italic whitespace-nowrap">PA: {{ ficha.pa_sistolica }}/{{ ficha.pa_diastolica }}</span>
                                 <span class="text-[10px] font-bold text-slate-600 bg-slate-100 px-2 py-0.5 rounded italic">T: {{ ficha.temperatura }}°C</span>
                             </div>
                         </td>
 
                         <td class="px-6 py-5 text-right">
-                            <form action="{% url 'attendance:lancamento_rotear' ficha.id %}" method="post" class="inline-flex gap-2">
-                                {% csrf_token %}
-                                <select name="medico_id" required class="text-[10px] font-bold uppercase bg-slate-50 border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-500 py-2">
-                                    <option value="">Médico...</option>
-                                    {% for medico in medicos %}
-                                        <option value="{{ medico.id }}">{{ medico.get_full_name|default:medico.username }}</option>
-                                    {% endfor %}
-                                </select>
-                                <input type="text" name="local" placeholder="SALA" required class="w-16 text-[10px] font-bold uppercase bg-slate-50 border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-500 py-2 text-center">
-                                <button type="submit" class="bg-[#004a99] hover:bg-blue-800 text-white p-2.5 rounded-lg transition-all shadow-md active:scale-95" title="Enviar para o Médico">
-                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 5l7 7-7 7" />
-                                    </svg>
-                                </button>
-                            </form>
+                            <form action="{% url 'attendance:lancamento_rotear' ficha.id %}" 
+                            method="post" 
+                            class="inline-flex gap-2" 
+                            onsubmit="chamarMedico(event, '{{ ficha.paciente.nome }}', '{{ ficha.codigo }}')">
+                            
+                            {% csrf_token %}
+                            
+                            <select name="medico_id" required 
+                                    class="text-[10px] font-bold uppercase bg-slate-50 border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-500 py-2">
+                                <option value="">Médico...</option>
+                                {% for medico in medicos %}
+                                    <option value="{{ medico.id }}">
+                                        Dr(a). {{ medico.get_full_name|upper|default:medico.username }}
+                                    </option>
+                                {% endfor %}
+                            </select>
+                            
+                            <input type="text" name="local" placeholder="SALA" required 
+                                class="w-16 text-[10px] font-bold uppercase bg-slate-50 border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-500 py-2 text-center">
+                            
+                            <button type="submit" 
+                                    class="bg-[#004a99] hover:bg-blue-800 text-white p-2.5 rounded-lg transition-all shadow-md active:scale-95 group-hover:scale-110" 
+                                    title="Enviar para o Médico">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 5l7 7-7 7" />
+                                </svg>
+                            </button>
+                        </form>
                         </td>
                     </tr>
                     {% empty %}
@@ -83,7 +96,7 @@
                                 <svg xmlns="http://www.w3.org/2000/svg" class="h-16 w-16 mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
                                 </svg>
-                                <p class="text-xl font-black italic uppercase italic">Ninguém triado no momento</p>
+                                <p class="text-xl font-black italic uppercase">Ninguém triado no momento</p>
                             </div>
                         </td>
                     </tr>
@@ -100,7 +113,7 @@
             
             <div class="space-y-4">
                 <div class="bg-blue-800/40 border border-blue-700 p-4 rounded-2xl flex justify-between items-center">
-                    <span class="text-xs font-bold uppercase text-blue-200">Em Atendimento</span>
+                    <span class="text-xs font-bold uppercase text-blue-200">Médicos Ativos</span>
                     <span class="text-2xl font-black">{{ medicos.count }}</span>
                 </div>
                 
@@ -127,4 +140,31 @@
     </div>
 
 </div>
+
+<script>
+    function chamarMedico(event, nome, senha) {
+        // Pegamos os valores da sala e do médico selecionado no momento do clique
+        const form = event.target;
+        const sala = form.querySelector('input[name="local"]').value;
+        const medicoSelect = form.querySelector('select[name="medico_id"]');
+        const medicoNome = medicoSelect.options[medicoSelect.selectedIndex].text;
+    
+        const mensagem = new SpeechSynthesisUtterance();
+        mensagem.text = `Atenção paciente: ${nome}. Senha: ${senha}. Comparecer ao ${medicoNome}, na sala ${sala}.`;
+        mensagem.lang = 'pt-BR';
+        mensagem.rate = 0.9;
+    
+        let repeticoes = 0;
+        mensagem.onend = function() {
+            repeticoes++;
+            if (repeticoes < 3) {
+                setTimeout(() => {
+                    window.speechSynthesis.speak(mensagem);
+                }, 1000);
+            }
+        };
+    
+        window.speechSynthesis.speak(mensagem);
+    }
+    </script>
 {% endblock %}

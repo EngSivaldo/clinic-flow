@@ -1,77 +1,113 @@
-{% extends "base.html" %}
+{% extends "layouts/base.html" %}
+{% block title %}Realizar Triagem • {{ ficha.paciente.nome }}{% endblock %}
 
 {% block content %}
 <div class="max-w-4xl mx-auto py-8">
-    <div class="bg-white rounded-xl shadow-lg overflow-hidden">
+    <div class="bg-white rounded-xl shadow-lg overflow-hidden border border-slate-200">
+        
         <div class="bg-slate-800 p-6 text-white flex justify-between items-center">
             <div>
-                <h1 class="text-2xl font-bold">{{ ficha.paciente.nome }}</h1>
-                <p class="text-slate-400 text-sm">Ficha: {{ ficha.codigo }} | CPF: {{ ficha.paciente.cpf }}</p>
+                <h1 class="text-2xl font-black uppercase tracking-tight">{{ ficha.paciente.nome }}</h1>
+                <p class="text-slate-400 text-sm font-bold">
+                    SENHA: <span class="text-white">{{ ficha.codigo }}</span> | 
+                    CPF: <span class="text-white">{{ ficha.paciente.cpf }}</span> | 
+                    IDADE: <span class="text-white">{{ ficha.paciente.data_nascimento|timesince }}</span>
+                </p>
             </div>
             <div class="text-right">
-                <span class="text-xs uppercase font-bold text-slate-400 block">Tempo de Espera</span>
-                <span class="text-xl font-mono">{{ ficha.criado_em|timesince }}</span>
+                <span class="text-[10px] uppercase font-black text-slate-400 block tracking-widest">Aguardando há</span>
+                <span class="text-xl font-mono font-bold text-emerald-400">{{ ficha.criado_em|timesince }}</span>
             </div>
         </div>
 
         <form method="post" class="p-8">
             {% csrf_token %}
             
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-                <div class="md:col-span-2 grid grid-cols-2 gap-4">
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-8 mb-8">
+                
+                <div class="md:col-span-2 grid grid-cols-2 gap-6">
                     <div class="space-y-2">
-                        <label class="block text-sm font-bold text-slate-700">PA Sistólica (mmHg)</label>
-                        <input type="number" name="pa_sistolica" placeholder="Ex: 120" class="w-full border-2 border-slate-200 rounded-lg p-3 focus:border-blue-500 outline-none">
+                        <label class="block text-xs font-black uppercase text-slate-500">PA Sistólica (mmHg)</label>
+                        <input type="number" name="pa_sistolica" placeholder="Ex: 120" required
+                               class="w-full border-2 border-slate-100 rounded-xl p-3 focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 outline-none transition-all font-bold">
                     </div>
                     <div class="space-y-2">
-                        <label class="block text-sm font-bold text-slate-700">PA Diastólica (mmHg)</label>
-                        <input type="number" name="pa_diastolica" placeholder="Ex: 80" class="w-full border-2 border-slate-200 rounded-lg p-3 focus:border-blue-500 outline-none">
+                        <label class="block text-xs font-black uppercase text-slate-500">PA Diastólica (mmHg)</label>
+                        <input type="number" name="pa_diastolica" placeholder="Ex: 80" required
+                               class="w-full border-2 border-slate-100 rounded-xl p-3 focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 outline-none transition-all font-bold">
                     </div>
                     <div class="space-y-2">
-                        <label class="block text-sm font-bold text-slate-700">Temperatura (°C)</label>
-                        <input type="number" step="0.1" name="temperatura" placeholder="Ex: 36.5" class="w-full border-2 border-slate-200 rounded-lg p-3 focus:border-blue-500 outline-none">
+                        <label class="block text-xs font-black uppercase text-slate-500">Temperatura (°C)</label>
+                        <input type="number" step="0.1" name="temperatura" placeholder="Ex: 36.5" required
+                               class="w-full border-2 border-slate-100 rounded-xl p-3 focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 outline-none transition-all font-bold">
                     </div>
                     <div class="space-y-2">
-                        <label class="block text-sm font-bold text-slate-700">Freq. Cardíaca (BPM)</label>
-                        <input type="number" name="frequencia_cardiaca" placeholder="Ex: 75" class="w-full border-2 border-slate-200 rounded-lg p-3 focus:border-blue-500 outline-none">
+                        <label class="block text-xs font-black uppercase text-slate-500">Freq. Cardíaca (BPM)</label>
+                        <input type="number" name="frequencia_cardiaca" placeholder="Ex: 75" required
+                               class="w-full border-2 border-slate-100 rounded-xl p-3 focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 outline-none transition-all font-bold">
                     </div>
                     <div class="col-span-2 space-y-2">
-                        <label class="block text-sm font-bold text-slate-700">Observações Clínicas</label>
-                        <textarea name="observacoes_triagem" rows="3" class="w-full border-2 border-slate-200 rounded-lg p-3 focus:border-blue-500 outline-none" placeholder="Queixas principais do paciente..."></textarea>
+                        <label class="block text-xs font-black uppercase text-slate-500">Observações Clínicas / Queixa Principal</label>
+                        <textarea name="observacoes_triagem" rows="4" required
+                                  class="w-full border-2 border-slate-100 rounded-xl p-3 focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 outline-none transition-all font-medium" 
+                                  placeholder="Descreva brevemente os sintomas relatados pelo paciente..."></textarea>
                     </div>
                 </div>
 
-                <div class="space-y-4">
-                    <label class="block text-sm font-bold text-slate-700 uppercase">Classificação de Risco</label>
-                    <div class="flex flex-col gap-2">
-                        <label class="cursor-pointer">
+                <div class="space-y-4 bg-slate-50 p-6 rounded-2xl border border-slate-100">
+                    <label class="block text-xs font-black uppercase text-slate-700 tracking-widest text-center mb-4">Classificação de Risco</label>
+                    <div class="flex flex-col gap-3">
+                        
+                        <label class="cursor-pointer group">
                             <input type="radio" name="prioridade" value="VERMELHO" class="peer hidden" required>
-                            <div class="p-3 rounded-lg border-2 border-transparent bg-red-100 text-red-700 font-bold text-center peer-checked:border-red-600 peer-checked:ring-2 ring-red-600">EMERGÊNCIA</div>
+                            <div class="p-4 rounded-xl border-2 border-transparent bg-white text-red-600 font-black text-xs text-center shadow-sm transition-all
+                                      peer-checked:bg-red-600 peer-checked:text-white peer-checked:scale-105 peer-checked:shadow-red-200 peer-checked:shadow-lg group-hover:border-red-200">
+                                EMERGÊNCIA (IMEDIATO)
+                            </div>
                         </label>
-                        <label class="cursor-pointer">
+
+                        <label class="cursor-pointer group">
                             <input type="radio" name="prioridade" value="LARANJA" class="peer hidden">
-                            <div class="p-3 rounded-lg border-2 border-transparent bg-orange-100 text-orange-700 font-bold text-center peer-checked:border-orange-600 peer-checked:ring-2 ring-orange-600">MUITO URGENTE</div>
+                            <div class="p-4 rounded-xl border-2 border-transparent bg-white text-orange-600 font-black text-xs text-center shadow-sm transition-all
+                                      peer-checked:bg-orange-500 peer-checked:text-white peer-checked:scale-105 peer-checked:shadow-orange-200 peer-checked:shadow-lg group-hover:border-orange-200">
+                                MUITO URGENTE (10 MIN)
+                            </div>
                         </label>
-                        <label class="cursor-pointer">
+
+                        <label class="cursor-pointer group">
                             <input type="radio" name="prioridade" value="AMARELO" class="peer hidden">
-                            <div class="p-3 rounded-lg border-2 border-transparent bg-yellow-100 text-yellow-700 font-bold text-center peer-checked:border-yellow-600 peer-checked:ring-2 ring-yellow-600">URGENTE</div>
+                            <div class="p-4 rounded-xl border-2 border-transparent bg-white text-yellow-600 font-black text-xs text-center shadow-sm transition-all
+                                      peer-checked:bg-yellow-400 peer-checked:text-white peer-checked:scale-105 peer-checked:shadow-yellow-200 peer-checked:shadow-lg group-hover:border-yellow-200">
+                                URGENTE (60 MIN)
+                            </div>
                         </label>
-                        <label class="cursor-pointer">
+
+                        <label class="cursor-pointer group">
                             <input type="radio" name="prioridade" value="VERDE" class="peer hidden">
-                            <div class="p-3 rounded-lg border-2 border-transparent bg-green-100 text-green-700 font-bold text-center peer-checked:border-green-600 peer-checked:ring-2 ring-green-600">POUCO URGENTE</div>
+                            <div class="p-4 rounded-xl border-2 border-transparent bg-white text-green-600 font-black text-xs text-center shadow-sm transition-all
+                                      peer-checked:bg-green-500 peer-checked:text-white peer-checked:scale-105 peer-checked:shadow-green-200 peer-checked:shadow-lg group-hover:border-green-200">
+                                POUCO URGENTE (120 MIN)
+                            </div>
                         </label>
-                        <label class="cursor-pointer">
+
+                        <label class="cursor-pointer group">
                             <input type="radio" name="prioridade" value="AZUL" class="peer hidden">
-                            <div class="p-3 rounded-lg border-2 border-transparent bg-blue-100 text-blue-700 font-bold text-center peer-checked:border-blue-600 peer-checked:ring-2 ring-blue-600">NÃO URGENTE</div>
+                            <div class="p-4 rounded-xl border-2 border-transparent bg-white text-blue-600 font-black text-xs text-center shadow-sm transition-all
+                                      peer-checked:bg-blue-600 peer-checked:text-white peer-checked:scale-105 peer-checked:shadow-blue-200 peer-checked:shadow-lg group-hover:border-blue-200">
+                                NÃO URGENTE (240 MIN)
+                            </div>
                         </label>
+
                     </div>
                 </div>
             </div>
 
-            <div class="flex justify-end gap-4 border-t pt-6">
-                <a href="{% url 'attendance:triagem_lista' %}" class="px-6 py-3 font-bold text-slate-500">Cancelar</a>
-                <button type="submit" class="bg-blue-600 hover:bg-blue-700 text-white px-10 py-3 rounded-xl font-bold shadow-lg transition-all transform hover:scale-105">
-                    FINALIZAR TRIAGEM E ENVIAR
+            <div class="flex justify-end items-center gap-6 border-t border-slate-100 pt-8">
+                <a href="{% url 'attendance:triagem_lista' %}" class="text-sm font-black uppercase text-slate-400 hover:text-slate-600 transition-colors">
+                    Cancelar e Voltar
+                </a>
+                <button type="submit" class="bg-[#004a99] hover:bg-blue-800 text-white px-12 py-4 rounded-2xl font-black uppercase tracking-widest shadow-xl shadow-blue-900/20 transition-all transform hover:-translate-y-1 active:scale-95">
+                    Finalizar Triagem
                 </button>
             </div>
         </form>

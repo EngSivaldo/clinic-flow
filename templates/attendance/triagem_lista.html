@@ -1,5 +1,5 @@
 {% extends "layouts/base.html" %}
-{% block title %}Roteamento de Consultas • Tucuruí{% endblock %}
+{% block title %}Fila de Triagem • Tucuruí{% endblock %}
 
 {% block content %}
 <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
@@ -9,11 +9,11 @@
         <div class="flex items-center justify-between bg-white p-6 rounded-2xl border border-slate-200 shadow-sm">
             <h2 class="text-2xl font-black text-[#004a99] flex items-center gap-3">
                 <span class="w-2 h-8 bg-emerald-500 rounded-full"></span>
-                LANÇAMENTO DE CONSULTAS
+                FILA DE TRIAGEM
             </h2>
             <div class="flex items-center gap-3">
-                <span class="bg-emerald-50 text-emerald-700 px-4 py-2 rounded-full font-bold text-sm">
-                    {{ triados.count }} AGUARDANDO MÉDICO
+                <span class="bg-emerald-50 text-emerald-700 px-4 py-2 rounded-full font-bold text-sm uppercase">
+                    {{ aguardando.count }} Aguardando
                 </span>
             </div>
         </div>
@@ -22,62 +22,51 @@
             <table class="w-full text-left border-collapse">
                 <thead class="bg-slate-50/50 border-b border-slate-100">
                     <tr>
-                        <th class="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">Prioridade</th>
+                        <th class="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">Senha</th>
                         <th class="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">Paciente</th>
-                        <th class="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">Sinais Vitais</th>
-                        <th class="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest text-right">Encaminhar Para</th>
+                        <th class="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest text-right">Ações</th>
                     </tr>
                 </thead>
-                <tbody class="divide-y divide-slate-50">
-                    {% for ficha in triados %}
-                    <tr class="hover:bg-slate-50/50 transition-colors group">
-                        <td class="px-6 py-5">
-                            <div class="flex items-center gap-2">
-                                <span class="w-4 h-4 rounded-full 
-                                    {% if ficha.prioridade == 'VERMELHO' %}bg-red-500 animate-pulse
-                                    {% elif ficha.prioridade == 'LARANJA' %}bg-orange-500
-                                    {% elif ficha.prioridade == 'AMARELO' %}bg-yellow-400
-                                    {% elif ficha.prioridade == 'VERDE' %}bg-green-500
-                                    {% else %}bg-blue-500{% endif %} shadow-sm">
-                                </span>
-                                <span class="text-[10px] font-black uppercase text-slate-500">{{ ficha.get_prioridade_display }}</span>
-                            </div>
+                <tbody class="divide-y divide-slate-100">
+                    {% for ficha in aguardando %}
+                    <tr class="hover:bg-slate-50 transition-colors">
+                        <td class="px-6 py-4 font-black text-[#004a99] text-xl">{{ ficha.codigo }}</td>
+                        <td class="px-6 py-4">
+                            <div class="font-bold text-slate-700 uppercase">{{ ficha.paciente.nome }}</div>
+                            <div class="text-[10px] text-slate-400 font-bold">CHEGADA: {{ ficha.criado_em|date:"H:i" }}</div>
                         </td>
-
-                        <td class="px-6 py-5">
-                            <div class="font-bold text-slate-800 uppercase tracking-tight">{{ ficha.paciente.nome }}</div>
-                            <div class="text-[10px] text-slate-400 font-bold">SENHA: {{ ficha.codigo }}</div>
-                        </td>
-
-                        <td class="px-6 py-5">
-                            <div class="flex gap-2">
-                                <span class="text-[10px] bg-slate-100 px-2 py-1 rounded text-slate-600 font-bold">PA: {{ ficha.pa_sistolica }}/{{ ficha.pa_diastolica }}</span>
-                                <span class="text-[10px] bg-slate-100 px-2 py-1 rounded text-slate-600 font-bold">T: {{ ficha.temperatura }}°</span>
-                            </div>
-                        </td>
-
-                        <td class="px-6 py-5">
-                            <form action="{% url 'attendance:lancamento_rotear' ficha.id %}" method="post" class="flex justify-end gap-2">
-                                {% csrf_token %}
-                                <select name="medico_id" required class="text-[10px] font-bold uppercase bg-slate-50 border-none rounded-lg focus:ring-2 focus:ring-blue-500">
-                                    <option value="">Selecionar Médico</option>
-                                    {% for medico in medicos %}
-                                        <option value="{{ medico.id }}">{{ medico.get_full_name|default:medico.username }}</option>
-                                    {% endfor %}
-                                </select>
-                                <input type="text" name="local" placeholder="Sala" required class="w-16 text-[10px] font-bold uppercase bg-slate-50 border-none rounded-lg focus:ring-2 focus:ring-blue-500">
-                                <button type="submit" class="bg-[#004a99] text-white p-2 rounded-lg hover:bg-blue-800 transition-all">
-                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 5l7 7-7 7" />
-                                    </svg>
+                        <td class="px-6 py-4 text-right">
+                            <div class="flex justify-end gap-2 items-center" id="acoes-{{ ficha.id }}">
+                                <a href="{% url 'attendance:triagem_chamar' ficha.id %}" 
+                                   id="btn-chamar-{{ ficha.id }}"
+                                   onclick="chamarPaciente(event, '{{ ficha.id }}', '{{ ficha.codigo }}', '{{ ficha.paciente.nome }}')"
+                                   class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-xl font-black text-[10px] transition-all uppercase tracking-wider">
+                                    Chamar no Painel
+                                </a>
+                        
+                                <button id="btn-parar-{{ ficha.id }}" 
+                                        onclick="pararChamada('{{ ficha.id }}')"
+                                        class="hidden bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-xl font-black text-[10px] transition-all uppercase tracking-wider">
+                                    Parar Chamada
                                 </button>
-                            </form>
+                        
+                                <a href="{% url 'attendance:triagem_finalizar' ficha.id %}" 
+                                   id="btn-triar-{{ ficha.id }}"
+                                   class="bg-emerald-500 hover:bg-emerald-600 text-white px-4 py-2 rounded-xl font-black text-[10px] transition-all uppercase tracking-wider">
+                                    Informar Situação
+                                </a>
+                            </div>
                         </td>
                     </tr>
                     {% empty %}
                     <tr>
-                        <td colspan="4" class="px-6 py-20 text-center text-slate-400 font-bold uppercase italic opacity-30">
-                            Nenhum paciente aguardando roteamento
+                        <td colspan="3" class="px-6 py-20 text-center">
+                            <div class="flex flex-col items-center gap-3 opacity-30">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-12 w-12" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
+                                </svg>
+                                <p class="font-black uppercase italic text-slate-500">Nenhum paciente aguardando triagem</p>
+                            </div>
                         </td>
                     </tr>
                     {% endfor %}
@@ -87,21 +76,75 @@
     </div>
 
     <div class="space-y-6">
-        <div class="bg-slate-800 rounded-[2rem] p-8 text-white shadow-2xl relative overflow-hidden">
-            <h3 class="font-black text-xs uppercase tracking-[0.3em] mb-6 opacity-60">Status Interno</h3>
+        <div class="bg-slate-800 rounded-[2rem] p-8 text-white shadow-2xl">
+            <h3 class="font-black text-xs uppercase tracking-[0.3em] mb-6 opacity-60">Status da Triagem</h3>
             <div class="space-y-4">
-                <div class="flex justify-between items-center bg-slate-700/50 p-4 rounded-2xl">
-                    <span class="text-xs font-bold">Médicos em Atendimento</span>
-                    <span class="text-2xl font-black text-emerald-400">{{ medicos.count }}</span>
-                </div>
-                <div class="p-4 bg-yellow-400/10 border border-yellow-400/20 rounded-2xl">
-                    <p class="text-yellow-400 text-[10px] font-black uppercase">Aviso do Sistema</p>
+                <div class="p-4 bg-emerald-500/10 border border-emerald-500/20 rounded-2xl">
+                    <p class="text-emerald-400 text-[10px] font-black uppercase">Procedimento</p>
                     <p class="text-white text-[11px] font-medium leading-relaxed mt-1">
-                        Priorize pacientes com marcador <span class="text-red-500 font-black">VERMELHO</span> no topo da lista.
+                        1. Clique em <b>Chamar</b> para alertar o paciente no painel.<br>
+                        2. Clique em <b>Informar Situação</b> para registrar sinais vitais e prioridade.
                     </p>
                 </div>
             </div>
         </div>
     </div>
 </div>
+<script>
+    // Variável global para controlar as frases ativas
+    let chamadasAtivas = {};
+    
+    function chamarPaciente(event, id, senha, nome) {
+        event.preventDefault();
+        const url = event.currentTarget.href;
+        
+        const btnChamar = document.getElementById(`btn-chamar-${id}`);
+        const btnParar = document.getElementById(`btn-parar-${id}`);
+    
+        // Alterna a visibilidade dos botões
+        btnChamar.classList.add('hidden');
+        btnParar.classList.remove('hidden');
+    
+        // Configuração da Voz
+        const mensagem = new SpeechSynthesisUtterance();
+        mensagem.text = `Atenção paciente: ${nome}. Senha: ${senha}. Comparecer à sala de triagem.`;
+        mensagem.lang = 'pt-BR';
+        mensagem.rate = 0.9;
+    
+        let repeticoes = 1;
+        chamadasAtivas[id] = true; // Marca que este paciente está sendo chamado
+    
+        mensagem.onend = function() {
+            if (chamadasAtivas[id] && repeticoes < 3) {
+                repeticoes++;
+                setTimeout(() => {
+                    if (chamadasAtivas[id]) window.speechSynthesis.speak(mensagem);
+                }, 1000);
+            } else {
+                finalizarVisual(id);
+            }
+        };
+    
+        // Inicia a chamada e avisa o servidor (Painel TV)
+        window.speechSynthesis.speak(mensagem);
+        fetch(url);
+    }
+    
+    function pararChamada(id) {
+        // Interrompe a lógica de repetição e a fala atual
+        chamadasAtivas[id] = false;
+        window.speechSynthesis.cancel(); 
+        finalizarVisual(id);
+    }
+    
+    function finalizarVisual(id) {
+        const btnChamar = document.getElementById(`btn-chamar-${id}`);
+        const btnParar = document.getElementById(`btn-parar-${id}`);
+        
+        btnParar.classList.add('hidden');
+        btnChamar.classList.remove('hidden');
+        btnChamar.innerText = "RECHAMAR";
+        btnChamar.classList.replace('bg-blue-600', 'bg-slate-500');
+    }
+    </script>
 {% endblock %}

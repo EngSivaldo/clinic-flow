@@ -14,7 +14,7 @@
             <h3 class="font-bold text-slate-700 uppercase text-xs tracking-wider">Dados do Paciente</h3>
         </div>
         
-        <form method="post" class="p-6 space-y-5">
+        <form method="post" action="{% url 'attendance:recepcao_gerar_senha' %}" class="p-6 space-y-5">
             {% csrf_token %}
 
             {% if form.non_field_errors %}
@@ -83,9 +83,12 @@
                 <div class="text-8xl font-black my-8 tabular-nums tracking-tighter relative z-10 animate-in fade-in zoom-in duration-500">
                     {{ senha_gerada }}
                 </div>
-                <div class="bg-emerald-500 text-white px-6 py-2 rounded-full text-xs font-bold uppercase mb-4 shadow-lg animate-bounce">
-                    Encaminhar: Triagem
-                </div>
+                
+                <a href="{% url 'attendance:recepcao_gerar_senha' %}" 
+                   class="bg-emerald-500 hover:bg-emerald-600 text-white px-6 py-3 rounded-xl text-sm font-black uppercase mb-4 shadow-lg transition-all transform hover:scale-105 active:scale-95 relative z-20">
+                    ✓ PRÓXIMO PACIENTE
+                </a>
+
                 <p class="text-blue-100 text-sm leading-relaxed relative z-10">
                     Oriente o paciente a aguardar a chamada na <strong>TV DA RECEPÇÃO</strong>.
                 </p>
