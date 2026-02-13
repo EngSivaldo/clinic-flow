@@ -36,7 +36,8 @@
                             <div class="text-[10px] text-slate-400 font-bold">CHEGADA: {{ ficha.criado_em|date:"H:i" }}</div>
                         </td>
                         <td class="px-6 py-4 text-right">
-                            <div class="flex justify-end gap-2 items-center" id="acoes-{{ ficha.id }}">
+                            <div class="flex justify-end gap-2 items-center">
+                                
                                 <a href="{% url 'attendance:triagem_chamar' ficha.id %}" 
                                    id="btn-chamar-{{ ficha.id }}"
                                    onclick="chamarPaciente(event, '{{ ficha.id }}', '{{ ficha.codigo }}', '{{ ficha.paciente.nome }}')"
@@ -46,13 +47,13 @@
                         
                                 <button id="btn-parar-{{ ficha.id }}" 
                                         onclick="pararChamada('{{ ficha.id }}')"
-                                        class="hidden bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-xl font-black text-[10px] transition-all uppercase tracking-wider">
+                                        class="hidden bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-xl font-black text-[10px] transition-all uppercase tracking-wider animate-pulse">
                                     Parar Chamada
                                 </button>
                         
                                 <a href="{% url 'attendance:triagem_finalizar' ficha.id %}" 
                                    id="btn-triar-{{ ficha.id }}"
-                                   class="bg-emerald-500 hover:bg-emerald-600 text-white px-4 py-2 rounded-xl font-black text-[10px] transition-all uppercase tracking-wider">
+                                   class="bg-slate-200 text-slate-400 pointer-events-none px-4 py-2 rounded-xl font-black text-[10px] transition-all uppercase tracking-wider">
                                     Informar Situação
                                 </a>
                             </div>
@@ -82,69 +83,55 @@
                 <div class="p-4 bg-emerald-500/10 border border-emerald-500/20 rounded-2xl">
                     <p class="text-emerald-400 text-[10px] font-black uppercase">Procedimento</p>
                     <p class="text-white text-[11px] font-medium leading-relaxed mt-1">
-                        1. Clique em <b>Chamar</b> para alertar o paciente no painel.<br>
-                        2. Clique em <b>Informar Situação</b> para registrar sinais vitais e prioridade.
+                        1. Clique em <b>Chamar</b> para alertar no painel.<br>
+                        2. O sistema repetirá a voz até o paciente chegar.<br>
+                        3. Clique em <b>Parar</b> para silenciar e liberar o botão <b>Informar Situação</b>.
                     </p>
                 </div>
             </div>
         </div>
     </div>
 </div>
+
 <script>
-    // Variável global para controlar as frases ativas
     let chamadasAtivas = {};
-    
+
     function chamarPaciente(event, id, senha, nome) {
         event.preventDefault();
-        const url = event.currentTarget.href;
+        const url = event.currentTarget.href; // URL que muda para 'CHAMADO_TRIAGEM'
         
         const btnChamar = document.getElementById(`btn-chamar-${id}`);
         const btnParar = document.getElementById(`btn-parar-${id}`);
-    
-        // Alterna a visibilidade dos botões
+
+        // 1. Troca os botões na tela da enfermeira
         btnChamar.classList.add('hidden');
         btnParar.classList.remove('hidden');
-    
-        // Configuração da Voz
-        const mensagem = new SpeechSynthesisUtterance();
-        mensagem.text = `Atenção paciente: ${nome}. Senha: ${senha}. Comparecer à sala de triagem.`;
-        mensagem.lang = 'pt-BR';
-        mensagem.rate = 0.9;
-    
-        let repeticoes = 1;
-        chamadasAtivas[id] = true; // Marca que este paciente está sendo chamado
-    
-        mensagem.onend = function() {
-            if (chamadasAtivas[id] && repeticoes < 3) {
-                repeticoes++;
-                setTimeout(() => {
-                    if (chamadasAtivas[id]) window.speechSynthesis.speak(mensagem);
-                }, 1000);
-            } else {
-                finalizarVisual(id);
-            }
-        };
-    
-        // Inicia a chamada e avisa o servidor (Painel TV)
-        window.speechSynthesis.speak(mensagem);
-        fetch(url);
+
+        // 2. Avisa o banco para mostrar na TV e tocar o som lá
+        fetch(url).then(response => {
+            console.log("Chamada enviada para o painel!");
+        });
     }
-    
+
     function pararChamada(id) {
-        // Interrompe a lógica de repetição e a fala atual
-        chamadasAtivas[id] = false;
-        window.speechSynthesis.cancel(); 
-        finalizarVisual(id);
-    }
-    
-    function finalizarVisual(id) {
-        const btnChamar = document.getElementById(`btn-chamar-${id}`);
-        const btnParar = document.getElementById(`btn-parar-${id}`);
-        
-        btnParar.classList.add('hidden');
-        btnChamar.classList.remove('hidden');
-        btnChamar.innerText = "RECHAMAR";
-        btnChamar.classList.replace('bg-blue-600', 'bg-slate-500');
-    }
-    </script>
+    window.speechSynthesis.cancel();
+
+    // Usando a tag de URL do Django para não ter erro de caminho
+    const urlAtendimento = "{% url 'attendance:triagem_marcar_atendimento' 0 %}".replace('0', id);
+
+    fetch(urlAtendimento)
+        .then(response => {
+            if (response.ok) {
+                console.log("Status alterado para EM_TRIAGEM com sucesso!");
+            }
+        })
+        .catch(error => console.error("Erro ao mudar status:", error));
+
+    // Esconde o vermelho e mostra o verde
+    document.getElementById(`btn-parar-${id}`).classList.add('hidden');
+    const btnTriar = document.getElementById(`btn-triar-${id}`);
+    btnTriar.classList.remove('bg-slate-200', 'text-slate-400', 'pointer-events-none');
+    btnTriar.classList.add('bg-emerald-500', 'text-white');
+}
+</script>
 {% endblock %}

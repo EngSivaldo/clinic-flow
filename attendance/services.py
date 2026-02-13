@@ -12,20 +12,41 @@ class CriarFichaResult:
 
 # --- GERAÇÃO DE CÓDIGO ---
 def _proximo_codigo() -> str:
+    from django.utils import timezone
     hoje = timezone.now().date()
     prefixo = "A"
-    ultimo = (
-        FichaAtendimento.objects
-        .filter(criado_em__date=hoje, codigo__startswith=prefixo)
-        .order_by("-codigo").first()
-    )
-    if not ultimo:
-        return f"{prefixo}001"
-    try:
-        numero = int(ultimo.codigo[1:])
-    except ValueError:
-        numero = 0
-    return f"{prefixo}{numero + 1:03d}"
+    
+    # 1. Tenta pegar a última ficha de hoje
+    ultima_hoje = FichaAtendimento.objects.filter(
+        criado_em__date=hoje
+    ).order_by('-id').first()
+
+    if ultima_hoje:
+        try:
+            numero = int(ultima_hoje.codigo[1:])
+            return f"{prefixo}{numero + 1:03d}"
+        except (ValueError, IndexError):
+            pass
+
+    # 2. Se não achou ficha de hoje, vamos conferir a ÚLTIMA GERAL do banco
+    # Isso evita o erro caso o fuso horário esteja desencontrado
+    ultima_geral = FichaAtendimento.objects.order_by('-id').first()
+    
+    if ultima_geral:
+        # Se a última ficha geral for de "hoje" (mesmo que o filtro de data falhou)
+        # extraímos o número dela e somamos 1
+        if ultima_geral.codigo.startswith(prefixo):
+            try:
+                # Verificamos se a data de criação da última é igual a hoje
+                # Se for o mesmo dia, incrementamos. Se for outro dia, resetamos para 001.
+                if ultima_geral.criado_em.date() == hoje:
+                    numero = int(ultima_geral.codigo[1:])
+                    return f"{prefixo}{numero + 1:03d}"
+            except:
+                pass
+
+    # 3. Se chegou aqui, ou é o primeiro do dia ou o banco está vazio
+    return f"{prefixo}001"
 
 # --- RECEPÇÃO ---
 @transaction.atomic
@@ -73,15 +94,17 @@ def finalizar_triagem(ficha_id: int, dados_triagem: dict) -> FichaAtendimento:
     ficha.save()
     return ficha
 
-# --- LANÇAMENTO ---
-
+# --- LANÇAMENTO / ROTEAMENTO ---
 @transaction.atomic
 def rotear_para_medico(ficha_id: int, medico_id: int, local: str) -> FichaAtendimento:
     ficha = FichaAtendimento.objects.select_for_update().get(id=ficha_id)
-    ficha.medico_id = medico_id
-    ficha.local = local
-    ficha.status = FichaAtendimento.Status.AGUARDANDO_MEDICO
-    ficha.chamado_em = None 
+    
+    # NOMES CORRIGIDOS CONFORME SEU MODELS.PY:
+    ficha.medico_atendente_id = medico_id # Usando _id para evitar busca extra no banco
+    ficha.local_atendimento = local       # Nome exato no seu model
+    
+    ficha.status = FichaAtendimento.Status.CHAMADO_MEDICO
+    ficha.chamado_em = timezone.now()
     ficha.save()
     return ficha
 

@@ -1,3 +1,4 @@
+from django.http import JsonResponse
 from django.shortcuts import render, get_object_or_404, redirect
 from django.views.decorators.http import require_http_methods
 from django.contrib import messages
@@ -16,14 +17,13 @@ from .models import FichaAtendimento
 
 User = get_user_model()
 
-# --- 1. RECEPÇÃO ---
-# --- RECEPÇÃO ---
+# --- 1. RECEPÇÃO (Ajustada para garantir que a service cuide da senha) ---
 def recepcao_gerar_senha(request):
     senha_gerada = None
     if request.method == "POST":
         form = RecepcaoGerarSenhaForm(request.POST)
         if form.is_valid():
-            # A service deve salvar o status como FichaAtendimento.Status.CHEGADA
+            # A service criar_ficha_por_cpf já usa o _proximo_codigo() corrigido
             result = criar_ficha_por_cpf(**form.cleaned_data)
             senha_gerada = result.ficha.codigo
             messages.success(request, f"Senha {senha_gerada} gerada!")
@@ -48,6 +48,8 @@ def triagem_lista(request):
         "aguardando": aguardando, 
         "em_triagem": em_triagem
     })
+    
+    
 def triagem_chamar(request, ficha_id):
     """Aciona o chamado visual/sonoro na TV 01."""
     chamar_para_triagem(ficha_id)
@@ -151,22 +153,61 @@ def finalizar_atendimento(request, ficha_id):
     messages.success(request, "Atendimento finalizado.")
     return redirect('attendance:medico_atendimento')
 
-# --- 5. PAINÉIS (TVs) ---
 
-def painel_recepcao(request):
-    """TV 01 - Recepção e Triagem."""
-    chamado = FichaAtendimento.objects.filter(
-        status__in=[FichaAtendimento.Status.CHAMADO_TRIAGEM, FichaAtendimento.Status.EM_TRIAGEM]
-    ).order_by('-chamado_em').first()
+def triagem_marcar_atendimento(request, ficha_id):
+    from django.http import JsonResponse
+    from .models import FichaAtendimento
     
+    ficha = get_object_or_404(FichaAtendimento, id=ficha_id)
+    # Este status 'EM_TRIAGEM' deve ser o mesmo que você usa no 
+    # template da TV para ativar a cor azul.
+    ficha.status = 'EM_TRIAGEM' 
+    ficha.save()
+    return JsonResponse({'status': 'ok'})
+
+# --- AJUSTE A VIEW DO PAINEL ---
+from django.utils import timezone
+from datetime import timedelta
+
+# No seu views.py
+def painel_recepcao(request):
+    agora = timezone.now()
+    
+    # SÓ BUSCA QUEM FOI CHAMADO NOS ÚLTIMOS 2 MINUTOS
+    # Isso impede que um erro de salvamento trave a TV o dia todo.
+    limite_chamada = agora - timedelta(minutes=2)
+
+    atual = FichaAtendimento.objects.filter(
+        status=FichaAtendimento.Status.CHAMADO_TRIAGEM,
+        atualizado_em__gte=limite_chamada # Trava de segurança
+    ).order_by('-atualizado_em').first()
+
+    if not atual:
+        # Mostra o azul (em atendimento) por apenas 30 segundos
+        limite_azul = agora - timedelta(seconds=30)
+        atual = FichaAtendimento.objects.filter(
+            status=FichaAtendimento.Status.EM_TRIAGEM,
+            atualizado_em__gte=limite_azul
+        ).order_by('-atualizado_em').first()
+
+    # ... resto do código ...
+
+    # Log de depuração atualizado
+    if atual:
+        print(f"DEBUG: Paciente ATIVO na TV: {atual.paciente.nome} | Status: {atual.status}")
+    else:
+        print("DEBUG: TELA LIMPA - Nenhum chamado recente.")
+
     proximos = FichaAtendimento.objects.filter(
         status=FichaAtendimento.Status.CHEGADA
-    ).order_by('criado_em')[:5]
-    
-    return render(request, "attendance/painel_recepcao.html", {
-        "atual": chamado, 
-        "proximos": proximos
+    ).order_by('criado_em')[:6]
+
+    return render(request, 'attendance/painel_recepcao.html', {
+        'atual': atual,
+        'proximos': proximos,
     })
+    
+    
     
 def painel_medico(request):
     """TV 02 - Consultórios."""
@@ -186,54 +227,25 @@ def painel_medico(request):
         "fila": fila_corredor
     })
 
-# --- 3. LANÇAMENTO (Corredor/Roteamento) ---
 
+# --- 3. LANÇAMENTO (Simplificada e conectada à Service) ---
 @login_required
 def lancamento_lista(request):
-    """
-    Lista pacientes triados e processa o encaminhamento para o médico.
-    """
-    # 1. Se o atendente clicou em "Encaminhar" (POST)
-    if request.method == "POST":
-        ficha_id = request.POST.get('ficha_id')
-        medico_id = request.POST.get('medico_id')
-        
-        ficha = get_object_or_404(FichaAtendimento, id=ficha_id)
-        medico = get_object_or_404(User, id=medico_id)
-        
-        # Atualiza a ficha para aparecer na TV 02
-        ficha.medico_atendente = medico
-        ficha.status = FichaAtendimento.Status.CHAMADO_MEDICO
-        ficha.chamado_em = timezone.now()
-        ficha.save()
-        
-        messages.success(request, f"Paciente {ficha.paciente.nome} encaminhado ao Dr(a). {medico.first_name}")
-        return redirect('attendance:lancamento_lista')
-
-    # 2. Renderização da Lista (GET)
+    """Lista pacientes triados aguardando encaminhamento."""
     triados = FichaAtendimento.objects.filter(
         status=FichaAtendimento.Status.TRIADO
-    ).order_by('-prioridade', 'atualizado_em') # Ordena por urgência e tempo
+    ).order_by('-prioridade', 'criado_em') 
     
-    # Busca usuários no grupo 'Medicos'
+    # Busca usuários no grupo 'Medicos' ou staff
     medicos = User.objects.filter(groups__name='Medicos')
     if not medicos.exists():
-        medicos = User.objects.filter(is_staff=True) # Fallback para usuários da equipe
+        medicos = User.objects.filter(is_staff=True)
     
     return render(request, "attendance/lancamento_lista.html", {
         "triados": triados, 
         "medicos": medicos
     })
-
-@require_http_methods(["POST"])
-def lancamento_rotear(request, ficha_id):
-    """Esta função você já deve ter, mas garanta que ela redireciona para a lista acima."""
-    medico_id = request.POST.get('medico_id')
-    local = request.POST.get('local')
     
-    rotear_para_medico(ficha_id, medico_id, local)
-    messages.success(request, "Paciente encaminhado ao consultório.")
-    return redirect('attendance:lancamento_lista')
 
 def tv_painel(request):
     # Pacientes chamados para TRIAGEM
@@ -250,3 +262,10 @@ def tv_painel(request):
         "chamados_triagem": chamados_triagem,
         "chamados_medico": chamados_medico,
     })
+    
+# No seu views.py (exemplo da função que para a chamada)
+def parar_chamada(request, pk):
+    ficha = get_object_status(FichaAtendimento, pk=pk)
+    ficha.status = FichaAtendimento.Status.EM_TRIAGEM
+    ficha.save() # Se isso aqui falhar, o Android nunca vai parar de gritar na TV!
+    return JsonResponse({'status': 'success'})

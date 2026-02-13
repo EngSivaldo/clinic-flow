@@ -24,4 +24,5 @@ urlpatterns = [
     
     path('medico/', views.medico_atendimento, name='medico_atendimento'),
     path('medico/chamar/<int:ficha_id>/', views.chamar_paciente_medico, name='chamar_medico'),
+    path('triagem/atendimento/<int:ficha_id>/', views.triagem_marcar_atendimento, name='triagem_marcar_atendimento'),
 ]
